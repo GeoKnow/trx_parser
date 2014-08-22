@@ -23,6 +23,8 @@ virt_dba_user = "dba"
 virt_dba_passwd = "dba"
 virt_log_offset = 0
 
+rsine_incl_graphs = []
+
 rsine_host = "127.0.0.1"
 rsine_port = "2221"
 
@@ -107,7 +109,7 @@ def placeRestCall(op, s, p, o):
 
 # parses <file> beginning at position <offset>, return last <offset> 
 def parse(file, offset):
-	global total_nr_triples, virt_isql_path, virt_server_port, virt_dba_user, virt_dba_passwd
+	global total_nr_triples, virt_isql_path, virt_server_port, virt_dba_user, virt_dba_passwd, rsine_incl_graphs
 	new_offset = 0
 	offset = int(float(offset))
 	cmdline = virt_isql_path + " " + virt_server_port + " " + virt_dba_user + " " + virt_dba_passwd 
@@ -122,14 +124,17 @@ def parse(file, offset):
 			# find "operation g s p o"
 			match = re.search('([DI])\s+(\S+)\s+(\S+)\s+(\S+)\s+(.*)', line) 
 			if match:
-				triple_count += 1
 				operation = match.group(1)
 				g = match.group(2)
 				s = match.group(3)
 				p = match.group(4)
 				o = match.group(5)
-				if not placeRestCall(operation, s, p, o):
-					ok = False
+				if len(rsine_incl_graphs) == 0 or g in rsine_incl_graphs:
+					triple_count += 1
+					if not placeRestCall(operation, s, p, o):
+						ok = False
+				#else:
+				#	print g + " not in " + `rsine_incl_graphs`
 
 			# find "offset"
 			match = re.search('(\d+)\s+BLOB.*', line) 
@@ -173,14 +178,17 @@ def handleFile(path):
 
 
 def parse_cmd_line():
-	global virt_isql_path, virt_log_path, virt_server_port, virt_dba_user, virt_dba_passwd, rsine_host, rsine_port
-	usage = "usage: python %prog -i <virt_isql_path> -l <virt_log_path> -s <virt_server_port> -u <virt_dba_user> -w <virt_dba_passwd> -r <rsine_host> -p <rsine_port>"
+	global virt_isql_path, virt_log_path, virt_server_port, virt_dba_user, virt_dba_passwd
+	global rsine_host, rsine_port, rsine_incl_graphs
+
+	usage = "usage: python %prog [-i <virt_isql_path>] [-l <virt_log_path>] [-s <virt_server_port>] [-u <virt_dba_user>] [-w <virt_dba_passwd>] [-r <rsine_host>] [-p <rsine_port>] [-g <\"graph1URI\"[,\"graph2URI\"[,...]]>]"
 	parser = OptionParser(usage=usage)
 	parser.add_option("-i", "--virt_isql_path", 	help="The path of the isql executable. Defaults to ./bin/isql\n")
 	parser.add_option("-l", "--virt_log_path", 		help="The path where virtuoso transaction logs are written. Defaults to ./var/lib/virtuoso/db/\n")
 	parser.add_option("-s", "--virt_server_port", 	help="The virtuoso server port. Defaults to 1111\n")
 	parser.add_option("-u", "--virt_dba_user", 		help="The dba user. Defaults to dba\n")
 	parser.add_option("-w", "--virt_dba_passwd", 	help="The dba password. Defaults to dba\n")
+	parser.add_option("-g", "--rsine_incl_graphs", 	help="A comma separated list of graph URIs to be included. Omitting this parameter defaults to all graphs.\n")
 	parser.add_option("-r", "--rsine_host", 		help="The hostname of the server where the rsine service is running. Defaults to 127.0.0.1\n")
 	parser.add_option("-p", "--rsine_port", 		help="The port the rsine services listens on. Defaults to 2221\n")
 	(options, args) = parser.parse_args()
@@ -192,6 +200,10 @@ def parse_cmd_line():
 	if options.rsine_port:
 		rsine_port = options.rsine_port
 	print "rsine_port: " + `rsine_port`
+
+	if options.rsine_incl_graphs:
+		rsine_incl_graphs = options.rsine_incl_graphs.split(",")
+	print "rsine_incl_graphs: " + `rsine_incl_graphs`
 
 	if options.virt_isql_path:
 		virt_isql_path = options.virt_isql_path
