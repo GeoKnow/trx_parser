@@ -43,7 +43,7 @@ We are interested in performance test considering the following metrics:
 
 Above command gives usage information:
 
-	Usage: python trx_parser.py -i <virt_isql_path> -l <virt_log_path> -s <virt_server_port> -u <virt_dba_user> -w <virt_dba_passwd> -r <rsine_host> -p <rsine_port>
+	Usage: python trx_parser.py [-i <virt_isql_path>] [-l <virt_log_path>] [-s <virt_server_port>] [-u <virt_dba_user>] [-w <virt_dba_passwd>] [-r <rsine_host>] [-p <rsine_port>] [-g <"graph1URI"[,"graph2URI"[,...]]>]
 
 	Options:
 	  -h, --help            show this help message and exit
@@ -59,6 +59,9 @@ Above command gives usage information:
 	                        The dba user. Defaults to dba
 	  -w VIRT_DBA_PASSWD, --virt_dba_passwd=VIRT_DBA_PASSWD
 	                        The dba password. Defaults to dba
+	  -g RSINE_INCL_GRAPHS, --rsine_incl_graphs=RSINE_INCL_GRAPHS
+	                        A comma separated list of graph URIs to be included.
+	                        Omitting this parameter defaults to all graphs.
 	  -r RSINE_HOST, --rsine_host=RSINE_HOST
 	                        The hostname of the server where the rsine service is
 	                        running. Defaults to 127.0.0.1
