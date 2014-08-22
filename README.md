@@ -71,5 +71,4 @@ Above command gives usage information:
 
 ## ToDos
 
-* add option ( -g, --graphs URI[,URI[,...]] ) to limit notifications to a list of graphs
 * code refactoring
