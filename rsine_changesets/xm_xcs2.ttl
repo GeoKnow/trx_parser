@@ -1,0 +1,48 @@
+@prefix spin: <http://spinrdf.org/sp/> .
+@prefix foaf: <http://xmlns.com/foaf/0.1/> .
+@prefix rsine: <http://lod2.eu/rsine/> .
+@prefix xm: <http://www.xybermotive.com/> .
+@prefix dcterms: <http://purl.org/dc/terms/>.
+
+xm:xcs2 a rsine:Subscription;
+    rsine:query [
+        dcterms:description "listen for every Order, if count == 10, get the supplierName";
+        spin:text """PREFIX cs:<http://purl.org/vocab/changeset/schema#>
+            PREFIX rdf:<http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+            PREFIX xm:<http://www.xybermotive.com/ontology/>
+            SELECT * WHERE {
+                ?cs a cs:ChangeSet .
+                ?cs cs:addition ?addition .
+                ?addition rdf:subject ?order .
+                ?addition rdf:predicate rdf:type .
+                ?addition rdf:object xm:Order
+            }""";
+
+        rsine:condition [
+            spin:text """PREFIX xm:<http://www.xybermotive.com/ontology/>
+                ASK { 
+                    ?order xm:count "10" .
+                    ?order xm:connection ?conn .
+                    FILTER (?conn != <http://www.xybermotive.com/connection/Initial>)
+            }""";
+            rsine:expect true;
+        ];
+
+        rsine:auxiliary [
+            spin:text """PREFIX xm:<http://www.xybermotive.com/ontology/>
+                SELECT ?supplierName WHERE {
+                    ?order xm:connection ?conn .
+                    ?conn xm:sender ?sender .
+                    ?sender xm:name ?supplierName 
+            }""";
+        ];
+
+        rsine:formatter [
+            a rsine:vtlFormatter;
+            rsine:message "The Sender $bindingSet.getValue('supplierName').getLabel() ordered 10.";
+        ];
+    ];
+    
+    rsine:notifier [
+        a rsine:loggingNotifier;
+    ]. 
