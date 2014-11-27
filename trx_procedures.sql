@@ -23,11 +23,6 @@ CREATE PROCEDURE elds_read_trx (
 				quad := line[2];
 				operation := 'I';
 			}
-			ELSE IF (line[0] in (1,8,9)) -- insert,soft,replacing
-			{
-				quad := line[1];
-				operation := 'I';
-			}
 			ELSE IF (line[0] in (3,14)) -- delete
 			{
 				quad := line[1];
@@ -36,14 +31,14 @@ CREATE PROCEDURE elds_read_trx (
 			IF (quad is not null)
 			{
 				quad_key := quad[0];
-				IF (quad_key = 273) -- RDF_QUAD, should check with SYS_KEYS
+				IF ( (quad_key = 273 and operation = 'I') or (quad_key = 271 and operation = 'D')) -- RDF_QUAD, should check with SYS_KEYS. 271 = SOFT INSERT/DELETE, 273 = INSERT
 				{
 					result (operation, __ro2sq (quad[1]), __ro2sq (quad[2]), __ro2sq (quad[3]), __ro2sq (quad[4]));
 				}
 			}
 		}
     } 
-  result (pos + inpos, '', '', '', '');
+  result (pos + inpos, 'OFFSET_POSITION', '', '', '');
 }
 ;
 

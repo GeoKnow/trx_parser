@@ -10,11 +10,11 @@ from optparse import OptionParser
 
 # sudo easy_install pip
 # [sudo] pip install python-dateutil
-from dateutil import parser 
+from dateutil import parser
 
 # [sudo] pip install watchdog
-from watchdog.observers import Observer  
-from watchdog.events import PatternMatchingEventHandler  
+from watchdog.observers import Observer
+from watchdog.events import PatternMatchingEventHandler
 
 virt_isql_path = "./bin/isql"
 virt_log_path = "./var/lib/virtuoso/db/"
@@ -50,7 +50,7 @@ def getFilesForPattern(pattern = virt_log_path + "*.trx"):
 		print trx_files_list
 	# sort ascending
 	trx_files_list = sorted(trx_files_list, key=lambda k: parser.parse(k['cmtime']))
-	return trx_files_list 
+	return trx_files_list
 # end getFilesForPattern
 
 
@@ -63,14 +63,14 @@ def search(search_key, search_term, search_list):
 
 # wrap in <...> if string starts with "http"
 def gtlt(string):
-	if string.startswith("http"): 
+	if string.startswith("http"):
 		return "<" + string + ">"
 	else:
 		return "\"" + string + "\""
 # end gtlt
 
 
-# do a rest call to rsine 
+# do a rest call to rsine
 def placeRestCall(op, s, p, o):
 	global last_ex
 	if op == "I":
@@ -79,7 +79,7 @@ def placeRestCall(op, s, p, o):
 		operation = "remove"
 	body    = "changeType=" + operation + "\n"
 	body   += "affectedTriple=" + gtlt(s) + " " + gtlt(p) + " " + gtlt(o) + " ."
-	headers = {"Content-Type": "text/plain", 
+	headers = {"Content-Type": "text/plain",
 			   "Accept": "text/plain"}
 
 	conn = httplib.HTTPConnection(rsine_host, rsine_port, timeout=5)
@@ -90,7 +90,7 @@ def placeRestCall(op, s, p, o):
 			return True
 		else:
 			print body
-			print res.status, res.reason	
+			print res.status, res.reason
 			return False
 		last_ex = False
 	except socket.error as ex:
@@ -107,12 +107,12 @@ def placeRestCall(op, s, p, o):
 # end placeRestCall
 
 
-# parses <file> beginning at position <offset>, return last <offset> 
+# parses <file> beginning at position <offset>, return last <offset>
 def parse(file, offset):
 	global total_nr_triples, virt_isql_path, virt_server_port, virt_dba_user, virt_dba_passwd, rsine_incl_graphs
 	new_offset = 0
 	offset = int(float(offset))
-	cmdline = virt_isql_path + " " + virt_server_port + " " + virt_dba_user + " " + virt_dba_passwd 
+	cmdline = virt_isql_path + " " + virt_server_port + " " + virt_dba_user + " " + virt_dba_passwd
 	cmdline += " \"EXEC=elds_read_trx('" + file + "', " + `offset` + "); exit;\""
 	args = shlex.split(cmdline)
 
@@ -122,7 +122,7 @@ def parse(file, offset):
 		ok = True
 		for line in output.splitlines():
 			# find "operation g s p o"
-			match = re.search('([DI])\s+(\S+)\s+(\S+)\s+(\S+)\s+(.*)', line) 
+			match = re.search('^([DI])\s+(\S+)\s+(\S+)\s+(\S+)\s+(.*)', line)
 			if match:
 				operation = match.group(1)
 				g = match.group(2)
@@ -137,17 +137,17 @@ def parse(file, offset):
 				#	print g + " not in " + `rsine_incl_graphs`
 
 			# find "offset"
-			match = re.search('(\d+)\s+BLOB.*', line) 
+			match = re.search('(\d+)\s+OFFSET_POSITION.*', line)
 			if match:
 				new_offset = match.group(1)
-		
+
 		if triple_count > 0:
 			print "# of send triples: " + `triple_count` + "; all ok: " + `ok`
 			if ok:
 				total_nr_triples += triple_count
 		if ok:
 			return new_offset
-		else: 
+		else:
 			return 0
 	except subprocess.CalledProcessError as ex:
 		print ex
@@ -160,15 +160,15 @@ def handleFile(path):
 
 	mtime = os.path.getmtime(path)
 	cmtime = time.ctime(mtime)
-	
-	if len(trx_parsed_file) > 0: 
+
+	if len(trx_parsed_file) > 0:
 		print "parsing, starting at " + `trx_parsed_file[0]['offset']` + ", " + path
 		new_offset = parse(path, trx_parsed_file[0]['offset'])
 		if new_offset != trx_parsed_file[0]['offset']:
 			trx_parsed_file[0]['offset'] = new_offset
 			print "new_offset: " + `new_offset`
 	else:
-		print "parsing (new file), starting at 0, " + path 
+		print "parsing (new file), starting at 0, " + path
 		offset = 0
 		new_offset = parse(path, offset)
 		trx_parsed_files.append({'path': path, 'offset': new_offset, 'cmtime': cmtime})
@@ -192,7 +192,7 @@ def parse_cmd_line():
 	parser.add_option("-r", "--rsine_host", 		help="The hostname of the server where the rsine service is running. Defaults to 127.0.0.1\n")
 	parser.add_option("-p", "--rsine_port", 		help="The port the rsine services listens on. Defaults to 2221\n")
 	(options, args) = parser.parse_args()
-	
+
 	if options.rsine_host:
 		rsine_host = options.rsine_host
 	print "rsine_host: " + rsine_host
@@ -232,7 +232,7 @@ class MyHandler(PatternMatchingEventHandler):
 
 	def process(self, event):
 		"""
-		event.event_type 
+		event.event_type
 		    'modified' | 'created' | 'moved' | 'deleted'
 		event.is_directory
 		    True | False
